@@ -29,6 +29,7 @@ class Chat2Comm:
         self.SET_ROOM_INFO = self.SERVER + "set_room_info"
         self.GET_MEMBERS = self.SERVER + "get_members"
         self.UPLOAD = self.SERVER + "upload"
+        self.MAKE_FRIENDS = self.SERVER + "make_friends"
 
         self.UID = 'uid'
         self.MID = 'mid'
@@ -70,13 +71,20 @@ class Chat2Comm:
 
 
 class Chat2Client:
-    def __init__(self):
-        self.comm = Chat2Comm(server_choose=0)
+    def __init__(self, server_choose=1):
+        self.comm = Chat2Comm(server_choose=server_choose)
         self.username = ""
         self.auth = ""
         self.gid = 0
         self.latest_mid = 0
         self.load()
+
+    def init(self):
+        self.username = ""
+        self.auth = ""
+        self.gid = 0
+        self.latest_mid = 0
+        self.save()
 
     def save(self):
         with open('save.json', 'w') as f:
@@ -86,11 +94,14 @@ class Chat2Client:
                 'latest_mid': self.latest_mid}))
 
     def load(self):
-        with open('save.json', 'r') as f:
-            settings = json.load(f)
-            self.username = settings['username']
-            self.auth = settings['auth']
-            self.latest_mid = settings['latest_mid']
+        try:
+            with open('save.json', 'r') as f:
+                settings = json.load(f)
+                self.username = settings['username']
+                self.auth = settings['auth']
+                self.latest_mid = settings['latest_mid']
+        except Exception as e:
+            print(e)
 
     def parse_errors(self, result):
         print(result['message'])
@@ -176,9 +187,25 @@ class Chat2Client:
             return
         return result['data']['upload_result']
 
+    def clear_all(self):
+        result = self.post_auth(self.comm.CLEAR_ALL, {})
+        print('Clear_ALL:', result)
+        return
+
+    def make_friends(self, friend: str):
+        result = self.post_auth(self.comm.MAKE_FRIENDS, {'friend': friend})
+        if result['code'] != '0':
+            self.parse_errors(result)
+            return
+
+    def join_in(self, gid: int):
+        result = self.post_auth(self.comm.JOIN_IN, {'gid': str(gid)})
+
 
 def module_test():
-    client = Chat2Client()
+    client = Chat2Client(server_choose=0)
+    client.init()
+    client.clear_all()
     client.signup('Lance', '')
     client.login('Lance', '')
     # time.sleep(1)
@@ -224,6 +251,27 @@ def mini_test():
         time.sleep(10)
 
 
+def friend_test():
+    client = Chat2Client(server_choose=0)
+    client.login('Lance', '')
+    rooms = client.get_rooms()
+    print(rooms)
+    client.join_in(2)
+    # client.make_friends('Tony')
+    # rooms = client.get_rooms()
+    # print(rooms)
+    client.enter_room(3)
+    while True:
+        messages = client.get_new_message()
+        print(len(messages), messages)
+        for m in messages:
+            client.send_message('我在听~ @%s\n你说%s' % (m['username'], m['text']))
+            client.latest_mid = client.latest_mid + 1
+            client.save()
+        time.sleep(3)
+
+
 if __name__ == '__main__':
     # module_test()
-    mini_test()
+    # mini_test()
+    friend_test()
