@@ -391,16 +391,12 @@ def friend_test():
         return
 
 
-app = None
-
-
 class LatinaPrinter:
     def __init__(self):
         global app
         font = QFont()
         font.setFamily('微软雅黑')
         font.setPointSize(10)
-        app = QApplication(sys.argv)
         app.setFont(font)
 
         self.client = Chat2Client(server_choose=0)
@@ -462,6 +458,8 @@ if __name__ == '__main__':
     friend_test()
     app.quit()
 """
+
+app = QApplication(sys.argv)
 
 if __name__ == '__main__':
     latina = LatinaPrinter()
