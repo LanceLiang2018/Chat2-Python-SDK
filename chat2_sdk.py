@@ -129,25 +129,28 @@ class Chat2Client:
             result = json.loads(request.text)
             if result['code'] != '0':
                 self.parse_errors(result)
-                return
+                return int(result['code'])
             self.auth = result['data']['auth']
             self.username = username
         self.comm.post_(self.comm.LOGIN, {'username': username, 'password': password}, login_callback)
+        return
 
     def login(self, username, password):
         result = self.post_auth(self.comm.LOGIN, {'username': username, 'password': password})
         if result['code'] != '0':
             self.parse_errors(result)
-            return
+            return int(result['code'])
         self.username = username
         self.auth = result['data']['user_info']['auth']
+        return int(result['code'])
 
     def signup(self, username, password, email='LanceLiang2018@163.com', name='Lance'):
         result = self.post_auth(self.comm.SIGNUP,
                                 {'username': username, 'password': password, 'email': email, 'name': name})
         if result['code'] != '0':
             self.parse_errors(result)
-            return
+            return int(result['code'])
+        return int(result['code'])
 
     def logout(self):
         self.auth = ''
@@ -156,26 +159,34 @@ class Chat2Client:
         result = self.post_auth(self.comm.BEAT, {})
         if result['code'] != '0':
             self.parse_errors(result)
+            return int(result['code'])
+        return int(result['code'])
 
     def create_room(self, room_name):
         result = self.post_auth(self.comm.CREATE_ROOM, {'name': room_name})
         if result['code'] != '0':
             self.parse_errors(result)
+            return int(result['code'])
+        return int(result['code'])
 
     def get_rooms(self):
         result = self.post_auth(self.comm.GET_ROOM_ALL, {})
         if result['code'] != '0':
             self.parse_errors(result)
-            return
+            return int(result['code'])
         return result['data']['room_data']
 
     def enter_room(self, gid: int):
         self.gid = gid
 
-    def get_new_message(self, gid: int=0):
+    def quit_room(self):
+        self.gid = 0
+
+    def get_messages(self, gid: int=0):
+        # must init gid to get single room messages
         if gid == 0:
             gid = self.gid
-        result = self.post_auth(self.comm.GET_MESSAGES, {'since': self.latest_mid, 'gid': gid})
+        result = self.post_auth(self.comm.GET_MESSAGES, {'since': self.latest_mid, 'gid': gid, 'request': "private"})
         if result['code'] != '0':
             self.parse_errors(result)
             return
@@ -192,29 +203,35 @@ class Chat2Client:
                                 {'message_type': message_type, 'text': text, 'gid': gid})
         if result['code'] != '0':
             self.parse_errors(result)
-            return
+            return int(result['code'])
+        return int(result['code'])
 
     def upload(self, filename, data):
         result = self.post_auth(self.comm.UPLOAD, {'data': data, 'filename': filename})
         if result['code'] != '0':
             self.parse_errors(result)
-            return
+            return int(result['code'])
         return result['data']['upload_result']
 
     def clear_all(self):
         # result = self.post_auth(self.comm.CLEAR_ALL, {})
         result = self.comm.get(self.comm.SERVER + '/clear_all')
         print('Clear_ALL:', result)
-        return
+        return int(result['code'])
 
     def make_friends(self, friend: str):
         result = self.post_auth(self.comm.MAKE_FRIENDS, {'friend': friend})
         if result['code'] != '0':
             self.parse_errors(result)
-            return
+            return int(result['code'])
+        return int(result['code'])
 
     def join_in(self, gid: int):
         result = self.post_auth(self.comm.JOIN_IN, {'gid': str(gid)})
+        if result['code'] != '0':
+            self.parse_errors(result)
+            return int(result['code'])
+        return int(result['code'])
 
     def get_image(self, url):
         content = requests.get(url).content
@@ -258,7 +275,6 @@ class ImagePrinterWindow(QMainWindow):
         # printer.setOutputFormat(QPrinter.PdfFormat)
         # printer.setOutputFileName("pdf.pdf")
 
-        rect = QRectF(0, 0, 180, 3276)
         option = QTextOption(Qt.AlignLeft)
         option.setWrapMode(QTextOption.WordWrap)
 
@@ -374,6 +390,64 @@ def friend_test():
         return
 
 
+app = None
+
+
+class LatinaPrinter:
+    def __init__(self):
+        global app
+        font = QFont()
+        font.setFamily('微软雅黑')
+        font.setPointSize(10)
+        app = QApplication(sys.argv)
+        app.setFont(font)
+
+        self.client = Chat2Client(server_choose=0)
+
+    def mainloop(self, username='Printer', password='1352040930lxr'):
+        self.client.logout()
+        code = self.client.login(username, password)
+        if code != 0:
+            print("Sign up...")
+            code = self.client.signup(username=username, password=password)
+            if code != 0:
+                print("Sign up error...", code)
+                return
+            code = self.client.login(username, password)
+        rooms = self.client.get_rooms()
+        print(rooms)
+        # client.join_in(2)
+        # client.make_friends('Lance')
+        # rooms = client.get_rooms()
+        # print(rooms)
+        # self.client.enter_room(10)
+        self.client.quit_room()
+        while True:
+            try:
+                messages = self.client.get_messages()
+                # print(messages)
+                for m in messages:
+                    if m['username'] == self.client.username:
+                        continue
+                    print(m)
+                    if m['type'] == 'image':
+                        image = self.client.get_image(m['text'])
+                        printer = Chat2Printer()
+                        printer.print_image(image=image)
+                    if m['type'] == 'text':
+                        text = "@{username}\n{text}".format(username=m['username'], text=m['text'])
+                        printer = Chat2Printer()
+                        printer.print_text(text=text)
+                    # time.sleep(1)
+                # time.sleep(10)
+            except Exception as e:
+                print(e)
+
+    def quit(self):
+        global app
+        app.quit()
+
+"""
 if __name__ == '__main__':
     font = QFont()
     # font.setFamily("Microsoft YaHei Mono")
@@ -386,3 +460,8 @@ if __name__ == '__main__':
     # mini_test()
     friend_test()
     app.quit()
+"""
+
+if __name__ == '__main__':
+    latina = LatinaPrinter()
+    latina.mainloop(username='Printer', password='1352040930lxr')
