@@ -144,9 +144,10 @@ class Chat2Client:
         self.auth = result['data']['user_info']['auth']
         return int(result['code'])
 
-    def signup(self, username, password, email='LanceLiang2018@163.com', name='Lance'):
+    def signup(self, username, password, email='LanceLiang2018@163.com', name='Lance', user_type='printer'):
         result = self.post_auth(self.comm.SIGNUP,
-                                {'username': username, 'password': password, 'email': email, 'name': name})
+                                {'username': username, 'password': password,
+                                 'email': email, 'name': name, 'user_type': user_type})
         if result['code'] != '0':
             self.parse_errors(result)
             return int(result['code'])
@@ -409,7 +410,7 @@ class LatinaPrinter:
         code = self.client.login(username, password)
         if code != 0:
             print("Sign up...")
-            code = self.client.signup(username=username, password=password)
+            code = self.client.signup(username=username, password=password, user_type='printer')
             if code != 0:
                 print("Sign up error...", code)
                 return
