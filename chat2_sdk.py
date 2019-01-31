@@ -13,6 +13,7 @@ import win32con
 from PIL import Image
 import numpy as np
 import io
+from imageProcessing import image_process
 
 
 class Chat2Comm:
@@ -394,14 +395,63 @@ def friend_test():
 class LatinaPrinter:
     def __init__(self):
         global app
-        font = QFont()
-        font.setFamily('微软雅黑')
-        font.setPointSize(10)
-        app.setFont(font)
+        global default_font
+        app.setFont(default_font)
+
+        self.default_option = {}
+
+        self.scenery_option = {
+            'black_white': True,
+            'intensity': True,
+            'high_enhance': True,
+        }
+
+        self.comic_option = {
+            'black_white': True,
+        }
+
+        self.black_white_option = {
+            'black_white': True,
+        }
+
+        self.options = {}
+        self.print_options = {
+            'comic': self.comic_option,
+            'default': self.default_option,
+            'black_white': self.black_white_option
+        }
+        self.font_options = {}
+        self.default_font_option = {
+            'font-family': '微软雅黑',
+            'font-size': 10,
+        }
+        self.font_families = ['微软雅黑', '宋体', '仿宋', '黑体',
+                              'YaHei Mono', '幼圆', '楷体', '隶书']
 
         self.client = Chat2Client(server_choose=0)
 
+    def set_option(self, username: str, option: str):
+        if option not in self.print_options:
+            return '修改设置失败！'
+        self.options[username] = self.print_options[option]
+        return '修改设置成功！'
+
+    def set_font_option(self, username: str, size: int=None, family: str=None):
+        if family is not None and family not in self.font_families:
+            return '修改设置失败！'
+        if size is not None and size > 30:
+            return '修改设置失败！'
+        option = self.default_font_option
+        if family is not None:
+            option['font-family'] = family
+        if size is not None:
+            option['font-size'] = size
+        self.options[username] = option
+        return '修改设置成功！'
+
     def mainloop(self, username='Printer', password='1352040930lxr'):
+        global app
+        global default_font
         self.client.logout()
         code = self.client.login(username, password)
         if code != 0:
@@ -427,18 +477,50 @@ class LatinaPrinter:
                     if m['username'] == self.client.username:
                         continue
                     print(m)
+                    if '[==image-option==]' in m['text']:
+                        option = json.loads(m['text'])['option']
+                        self.client.send_message(self.set_option(option), gid=int(m['gid']))
+                        continue
+                    if '[==font-option==]' in m['text']:
+                        option = json.loads(m['text'])['option']
+                        family = None
+                        size = None
+                        if 'family' in option:
+                            family = option['family']
+                        if 'size' in option:
+                            size = int(option['size'])
+                        self.client.send_message(
+                            self.set_font_option(family=family, size=size),
+                            gid=int(m['gid'])
+                        )
+                        continue
                     if m['type'] == 'image':
                         image = self.client.get_image(m['text'])
+                        option = None
+                        if m['username'] in self.options:
+                            option = self.options[m['username']]
+                        image = image_process(image, option=option)
                         printer = Chat2Printer()
                         printer.print_image(image=image)
+                        self.client.send_message('打印完成！', gid=int(m['gid']))
                     if m['type'] == 'text':
                         text = "@{username}\n{text}".format(username=m['username'], text=m['text'])
+                        option = None
+                        app.setFont(default_font)
+                        if m['username'] in self.font_options:
+                            option = self.font_options[m['username']]
+                        if option is not None:
+                            font = QFont()
+                            font.setFamily(option['font-family'])
+                            font.setPointSize(option['font-size'])
+                            app.setFont(font)
                         printer = Chat2Printer()
                         printer.print_text(text=text)
                     # time.sleep(1)
                 # time.sleep(10)
             except Exception as e:
                 print(e)
+                self.client.send_message(str(e), gid=1)
 
     def quit(self):
         global app
@@ -460,7 +542,10 @@ if __name__ == '__main__':
 """
 
 app = QApplication(sys.argv)
+default_font = QFont()
+default_font.setFamily('微软雅黑')
+default_font.setPointSize(10)
 
 if __name__ == '__main__':
     latina = LatinaPrinter()
-    latina.mainloop(username='Printer', password='1352040930lxr')
+    latina.mainloop(username='Printer2', password='1352040930lxr')
