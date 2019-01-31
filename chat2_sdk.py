@@ -426,14 +426,33 @@ class LatinaPrinter:
             'font-size': 10,
         }
         self.font_families = ['微软雅黑', '宋体', '仿宋', '黑体',
-                              'YaHei Mono', '幼圆', '楷体', '隶书']
+                              'Microsoft YaHei Mono', '幼圆', '楷体', '隶书']
 
         self.client = Chat2Client(server_choose=0)
+        self.load()
+
+    def save(self):
+        with open('options.json', 'w') as f:
+            f.write(json.dumps({
+                'options': self.options,
+                'font_options': self.font_options
+            }))
+
+    def load(self):
+        try:
+            with open('options.json', 'r') as f:
+                save_options = json.load(f)
+                self.options = save_options['options']
+                self.font_options = save_options['font_options']
+        except Exception as e:
+            print(e, 'try to save...')
+            self.save()
 
     def set_option(self, username: str, option: str):
         if option not in self.print_options:
             return '修改设置失败！'
         self.options[username] = self.print_options[option]
+        self.save()
         return '修改设置成功！'
 
     def set_font_option(self, username: str, size: int=None, family: str=None):
@@ -446,7 +465,8 @@ class LatinaPrinter:
             option['font-family'] = family
         if size is not None:
             option['font-size'] = size
-        self.options[username] = option
+        self.font_options[username] = option
+        self.save()
         return '修改设置成功！'
 
     def mainloop(self, username='Printer', password='1352040930lxr'):
@@ -490,7 +510,7 @@ class LatinaPrinter:
                         if 'size' in option:
                             size = int(option['size'])
                         self.client.send_message(
-                            self.set_font_option(family=family, size=size),
+                            self.set_font_option(username=m['username'], family=family, size=size),
                             gid=int(m['gid'])
                         )
                         continue
