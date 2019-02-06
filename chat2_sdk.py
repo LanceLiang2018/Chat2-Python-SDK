@@ -422,8 +422,8 @@ class LatinaPrinter:
         }
         self.font_options = {}
         self.default_font_option = {
-            'font-family': '微软雅黑',
-            'font-size': 10,
+            'font_family': '微软雅黑',
+            'font_size': 10,
         }
         self.font_families = ['微软雅黑', '宋体', '仿宋', '黑体',
                               'Microsoft YaHei Mono', '幼圆', '楷体', '隶书']
@@ -462,9 +462,9 @@ class LatinaPrinter:
             return '修改设置失败！'
         option = self.default_font_option
         if family is not None:
-            option['font-family'] = family
+            option['font_family'] = family
         if size is not None:
-            option['font-size'] = size
+            option['font_size'] = size
         self.font_options[username] = option
         self.save()
         return '修改设置成功！'
