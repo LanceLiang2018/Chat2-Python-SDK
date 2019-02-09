@@ -199,7 +199,7 @@ class Chat2Client:
         messages = result['data']['message']
         for m in messages:
             self.latest_mid = max(self.latest_mid, m['mid'])
-            print("\t\tlatest_mid:", self.latest_mid)
+            # print("\t\tlatest_mid:", self.latest_mid)
         self.save()
         return messages
 
@@ -255,14 +255,23 @@ def delay_enter():
 
 
 class TextPrinterWindow(QMainWindow):
-    def __init__(self, parent=None, text=None):
+    def __init__(self, parent=None, text=None, paper_type='58'):
         super(TextPrinterWindow, self).__init__(parent)
 
         printer = QPrinter()
         # printer.setOutputFormat(QPrinter.PdfFormat)
         # printer.setOutputFileName("pdf.pdf")
 
-        rect = QRectF(0, 0, 180, 3276)
+        # rect = QRectF(0, 0, 180, 3276)
+        if paper_type == 'A4':
+            width = printer.logicalDpiX() * (210 / 25.4)
+            height = printer.logicalDpiY() * (297 / 25.4)
+            rect = QRectF(0, 0, width, height)
+        else:
+            width = 180
+            height = 3276
+            rect = QRectF(0, 0, width, height)
+
         option = QTextOption(Qt.AlignLeft)
         option.setWrapMode(QTextOption.WordWrap)
 
@@ -276,7 +285,7 @@ class TextPrinterWindow(QMainWindow):
 
 
 class ImagePrinterWindow(QMainWindow):
-    def __init__(self, parent=None, image=None):
+    def __init__(self, parent=None, image=None, paper_type='58'):
         super(ImagePrinterWindow, self).__init__(parent)
 
         printer = QPrinter()
@@ -295,7 +304,16 @@ class ImagePrinterWindow(QMainWindow):
             # image = Image.open(image)
             if image.size[1] < image.size[0]:
                 image = image.rotate(90, expand=True)
-            rect = QRectF(0, 0, 180, image.size[1] * (180 / image.size[0]))
+            if paper_type == 'A4':
+                width = printer.logicalDpiX() * (210 / 25.4)
+                height = printer.logicalDpiY() * (297 / 25.4)
+                if width / height < image.size[0] / image.size[1]:
+                    rect = QRectF(0, 0, width, image.size[1] * (width / image.size[0]))
+                else:
+                    rect = QRectF(0, 0, image.size[0] * (height / image.size[1]), height)
+            else:
+                width = 180
+                rect = QRectF(0, 0, width, image.size[1] * (width / image.size[0]))
             img = np.array(image)
             im = QImage(img[:], img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
             painter.drawImage(rect, im)
@@ -303,14 +321,14 @@ class ImagePrinterWindow(QMainWindow):
 
 
 class Chat2Printer:
-    def print_text(self, text):
+    def print_text(self, text, paper_type='58'):
         global app
         window = TextPrinterWindow(text=text)
         app.closeAllWindows()
 
-    def print_image(self, image):
+    def print_image(self, image, paper_type='58'):
         global app
-        window = ImagePrinterWindow(image=image)
+        window = ImagePrinterWindow(image=image, paper_type=paper_type)
         app.closeAllWindows()
 
 
@@ -431,6 +449,8 @@ class LatinaPrinter:
             'font-family': '微软雅黑',
             'font-size': 10,
         }
+        self.sdk_running = False
+        self.quit_confirm = False
         self.font_families = ['微软雅黑', '宋体', '仿宋', '黑体',
                               'Microsoft YaHei Mono', '幼圆', '楷体', '隶书']
 
@@ -495,17 +515,23 @@ class LatinaPrinter:
         # print(rooms)
         # self.client.enter_room(10)
         self.client.quit_room()
+        self.sdk_running = True
         while True:
+            if self.sdk_running is False:
+                self.quit_confirm = True
+                print("latina quit.")
+                self.quit()
+                quit()
             try:
                 # messages = self.client.get_messages()
                 rooms = self.client.get_rooms()
                 messages = []
                 for r in rooms:
                     if r['room_type'] == 'printer':
-                        print('\twill get gid:', r['gid'], end='')
+                        # print('will get gid:', r['gid'], end='')
                         self.client.enter_room(gid=int(r['gid']))
                         m = self.client.get_messages(gid=int(r['gid']))
-                        print('\tgot message:', m)
+                        # print('got message:', m)
                         messages.extend(m)
                 # print(messages)
                 for m in messages:
@@ -513,6 +539,13 @@ class LatinaPrinter:
                         continue
                     print(m)
                     try:
+                        try:
+                            with open('paper.txt', 'r') as f:
+                                paper_type = f.read()
+                        except FileNotFoundError as e:
+                            paper_type = '58'
+                            with open('paper.txt', 'w') as f:
+                                f.write(paper_type)
                         if '[--image-option--]' in m['text']:
                             option = json.loads(m['text'])['option']
                             self.client.send_message(self.set_option(option), gid=int(m['gid']))
@@ -537,7 +570,7 @@ class LatinaPrinter:
                                 option = self.options[m['username']]
                             # image = image_process(image, option=option)
                             printer = Chat2Printer()
-                            printer.print_image(image=image)
+                            printer.print_image(image=image, paper_type=paper_type)
                             self.client.send_message('打印完成！', gid=int(m['gid']))
                         if m['type'] == 'text':
                             text = "@{username}\n{text}".format(username=m['username'], text=m['text'])
@@ -551,7 +584,7 @@ class LatinaPrinter:
                                 font.setPointSize(option['font-size'])
                                 app.setFont(font)
                             printer = Chat2Printer()
-                            printer.print_text(text=text)
+                            printer.print_text(text=text, paper_type=paper_type)
                             self.client.send_message('打印完成！', gid=int(m['gid']))
                         time.sleep(1)
                     except Exception as e:
@@ -560,7 +593,7 @@ class LatinaPrinter:
             except Exception as e:
                 print(e)
                 self.client.send_message(str(e), gid=1)
-            time.sleep(20)
+            time.sleep(10)
 
     def quit(self):
         global app
