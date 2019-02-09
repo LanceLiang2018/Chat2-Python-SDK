@@ -20,7 +20,9 @@ import os
 
 class Chat2Comm:
     def __init__(self, server_choose=1):
-        self.servers = ["https://lance-chatroom2.herokuapp.com/v3/api",
+        # self.servers = ["http://lance-chatroom2.herokuapp.com/v3/api",
+        #                 "http://127.0.0.1:5000/v3/api"]
+        self.servers = ["http://lance-latina-debug.herokuapp.com/v3/api",
                         "http://127.0.0.1:5000/v3/api"]
         self.SERVER = self.servers[server_choose]
         self.MAIN = ""
@@ -190,13 +192,14 @@ class Chat2Client:
         # must init gid to get single room messages
         if gid == 0:
             gid = self.gid
-        result = self.post_auth(self.comm.GET_MESSAGES, {'since': self.latest_mid, 'gid': gid, 'request': "private"})
+        result = self.post_auth(self.comm.GET_MESSAGES, {'since': self.latest_mid, 'gid': gid})
         if result['code'] != '0':
             self.parse_errors(result)
             return
         messages = result['data']['message']
         for m in messages:
             self.latest_mid = max(self.latest_mid, m['mid'])
+            print("\t\tlatest_mid:", self.latest_mid)
         self.save()
         return messages
 
@@ -494,7 +497,16 @@ class LatinaPrinter:
         self.client.quit_room()
         while True:
             try:
-                messages = self.client.get_messages()
+                # messages = self.client.get_messages()
+                rooms = self.client.get_rooms()
+                messages = []
+                for r in rooms:
+                    if r['room_type'] == 'printer':
+                        print('\twill get gid:', r['gid'], end='')
+                        self.client.enter_room(gid=int(r['gid']))
+                        m = self.client.get_messages(gid=int(r['gid']))
+                        print('\tgot message:', m)
+                        messages.extend(m)
                 # print(messages)
                 for m in messages:
                     if m['username'] == self.client.username:
@@ -545,10 +557,10 @@ class LatinaPrinter:
                     except Exception as e:
                         print(e)
                         self.client.send_message("打印错误！" + str(e), gid=int(m['gid']))
-                time.sleep(20)
             except Exception as e:
                 print(e)
                 self.client.send_message(str(e), gid=1)
+            time.sleep(20//5)
 
     def quit(self):
         global app
