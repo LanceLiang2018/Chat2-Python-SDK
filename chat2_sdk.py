@@ -14,7 +14,10 @@ from PIL import Image
 import numpy as np
 import io
 <<<<<<< HEAD
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
 =======
 >>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
 from imageProcessing import image_process
@@ -502,6 +505,7 @@ class LatinaPrinter:
                         continue
                     print(m)
 <<<<<<< HEAD
+<<<<<<< HEAD
                     try:
                         if '[--image-option--]' in m['text']:
                             option = json.loads(m['text'])['option']
@@ -549,6 +553,8 @@ class LatinaPrinter:
                         self.client.send_message("打印错误！" + str(e), gid=int(m['gid']))
                 time.sleep(5)
 =======
+=======
+>>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
                     if '[==image-option==]' in m['text']:
                         option = json.loads(m['text'])['option']
                         self.client.send_message(self.set_option(option), gid=int(m['gid']))
@@ -590,6 +596,9 @@ class LatinaPrinter:
                         printer.print_text(text=text)
                     # time.sleep(1)
                 # time.sleep(10)
+<<<<<<< HEAD
+>>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
+=======
 >>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
             except Exception as e:
                 print(e)
