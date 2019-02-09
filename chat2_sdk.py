@@ -15,7 +15,7 @@ from PIL import Image
 import numpy as np
 import io
 import os
-# from imageProcessing import image_process
+from imageProcessing import image_process
 
 
 class Chat2Comm:
@@ -523,7 +523,7 @@ class LatinaPrinter:
                             option = None
                             if m['username'] in self.options:
                                 option = self.options[m['username']]
-                            # image = image_process(image, option=option)
+                            image = image_process(image, option=option)
                             printer = Chat2Printer()
                             printer.print_image(image=image)
                             self.client.send_message('打印完成！', gid=int(m['gid']))
