@@ -7,6 +7,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import *
+from PyQt5 import sip
 import sys
 # import win32api
 # import win32con
