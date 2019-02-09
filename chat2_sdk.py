@@ -545,7 +545,7 @@ class LatinaPrinter:
                     except Exception as e:
                         print(e)
                         self.client.send_message("打印错误！" + str(e), gid=int(m['gid']))
-                time.sleep(5)
+                time.sleep(20)
             except Exception as e:
                 print(e)
                 self.client.send_message(str(e), gid=1)
