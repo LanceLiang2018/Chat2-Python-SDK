@@ -7,23 +7,15 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import *
+from PyQt5 import sip
 import sys
-import win32api
-import win32con
+# import win32api
+# import win32con
 from PIL import Image
 import numpy as np
 import io
-<<<<<<< HEAD
-<<<<<<< HEAD
 import os
-<<<<<<< HEAD
-=======
->>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
-=======
->>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
-=======
->>>>>>> parent of 8fba42f... fix - no image
-from imageProcessing import image_process
+# from imageProcessing import image_process
 
 
 class Chat2Comm:
@@ -251,11 +243,12 @@ class Chat2Client:
         image = Image.open(stream)
         return image
 
-
+'''
 def delay_enter():
     time.sleep(0.5)
     win32api.keybd_event(0x0D, 0, 0, 0)  # Enter
     win32api.keybd_event(0x0D, 0, win32con.KEYEVENTF_KEYUP, 0)  # 释放按键
+'''
 
 
 class TextPrinterWindow(QMainWindow):
@@ -432,8 +425,8 @@ class LatinaPrinter:
         }
         self.font_options = {}
         self.default_font_option = {
-            'font_family': '微软雅黑',
-            'font_size': 10,
+            'font-family': '微软雅黑',
+            'font-size': 10,
         }
         self.font_families = ['微软雅黑', '宋体', '仿宋', '黑体',
                               'Microsoft YaHei Mono', '幼圆', '楷体', '隶书']
@@ -472,9 +465,9 @@ class LatinaPrinter:
             return '修改设置失败！'
         option = self.default_font_option
         if family is not None:
-            option['font_family'] = family
+            option['font-family'] = family
         if size is not None:
-            option['font_size'] = size
+            option['font-size'] = size
         self.font_options[username] = option
         self.save()
         return '修改设置成功！'
@@ -507,8 +500,6 @@ class LatinaPrinter:
                     if m['username'] == self.client.username:
                         continue
                     print(m)
-<<<<<<< HEAD
-<<<<<<< HEAD
                     try:
                         if '[--image-option--]' in m['text']:
                             option = json.loads(m['text'])['option']
@@ -532,7 +523,7 @@ class LatinaPrinter:
                             option = None
                             if m['username'] in self.options:
                                 option = self.options[m['username']]
-                            image = image_process(image, option=option)
+                            # image = image_process(image, option=option)
                             printer = Chat2Printer()
                             printer.print_image(image=image)
                             self.client.send_message('打印完成！', gid=int(m['gid']))
@@ -555,54 +546,6 @@ class LatinaPrinter:
                         print(e)
                         self.client.send_message("打印错误！" + str(e), gid=int(m['gid']))
                 time.sleep(5)
-=======
-=======
->>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
-                    if '[==image-option==]' in m['text']:
-                        option = json.loads(m['text'])['option']
-                        self.client.send_message(self.set_option(option), gid=int(m['gid']))
-                        continue
-                    if '[==font-option==]' in m['text']:
-                        option = json.loads(m['text'])['option']
-                        family = None
-                        size = None
-                        if 'family' in option:
-                            family = option['family']
-                        if 'size' in option:
-                            size = int(option['size'])
-                        self.client.send_message(
-                            self.set_font_option(username=m['username'], family=family, size=size),
-                            gid=int(m['gid'])
-                        )
-                        continue
-                    if m['type'] == 'image':
-                        image = self.client.get_image(m['text'])
-                        option = None
-                        if m['username'] in self.options:
-                            option = self.options[m['username']]
-                        image = image_process(image, option=option)
-                        printer = Chat2Printer()
-                        printer.print_image(image=image)
-                        self.client.send_message('打印完成！', gid=int(m['gid']))
-                    if m['type'] == 'text':
-                        text = "@{username}\n{text}".format(username=m['username'], text=m['text'])
-                        option = None
-                        app.setFont(default_font)
-                        if m['username'] in self.font_options:
-                            option = self.font_options[m['username']]
-                        if option is not None:
-                            font = QFont()
-                            font.setFamily(option['font-family'])
-                            font.setPointSize(option['font-size'])
-                            app.setFont(font)
-                        printer = Chat2Printer()
-                        printer.print_text(text=text)
-                    # time.sleep(1)
-                # time.sleep(10)
-<<<<<<< HEAD
->>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
-=======
->>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
             except Exception as e:
                 print(e)
                 self.client.send_message(str(e), gid=1)
@@ -633,4 +576,8 @@ default_font.setPointSize(10)
 
 if __name__ == '__main__':
     latina = LatinaPrinter()
-    latina.mainloop(username='Printer2', password='1352040930lxr')
+    if not os.path.exists("save.json"):
+        g_username = input("请输入用户名：")
+        g_password = input("请输入密码：")
+        latina.mainloop(username=g_username, password=g_password)
+    latina.mainloop()
