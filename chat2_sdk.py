@@ -16,10 +16,13 @@ import io
 <<<<<<< HEAD
 <<<<<<< HEAD
 import os
+<<<<<<< HEAD
 =======
 >>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
 =======
 >>>>>>> parent of 49df7b0... Merge branch 'master' of https://github.com/LanceLiang2018/Chat2-Python-SDK
+=======
+>>>>>>> parent of 8fba42f... fix - no image
 from imageProcessing import image_process
 
 
