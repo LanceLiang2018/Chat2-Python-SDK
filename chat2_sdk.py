@@ -481,10 +481,10 @@ class LatinaPrinter:
         self.client.logout()
         code = self.client.login(username, password)
         if code != 0:
-            print("Sign up...")
+            print("新用户，注册...")
             code = self.client.signup(username=username, password=password, user_type='printer')
             if code != 0:
-                print("Sign up error...", code)
+                print("注册错误...", code)
                 return
             code = self.client.login(username, password)
         rooms = self.client.get_rooms()
@@ -560,7 +560,7 @@ class LatinaPrinter:
             except Exception as e:
                 print(e)
                 self.client.send_message(str(e), gid=1)
-            time.sleep(20//5)
+            time.sleep(20)
 
     def quit(self):
         global app
